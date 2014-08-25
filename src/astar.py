@@ -1,6 +1,6 @@
 from math import sqrt
 
-class AStar():
+class AStar(object):
     def __init__(self, graph):
         self.graph = graph
         
