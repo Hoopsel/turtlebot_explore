@@ -1,18 +1,18 @@
 class ScanDetect():
     def __init__(self, ranges, angle_min, angle_max, angle_increment):
-        self.ranges = ranges
+        self.ranges = [x for x in ranges if x > 0]
+        self.angles = [angle_min + i * angle_increment for i, j in enumerate(ranges) if j > 0]
         self.angle_min, self.angle_max, self.angle_increment = angle_min, angle_max, angle_increment
 
     def segmentise(self):
-        d_thd = 0.1
+        d_thd = 0.05
         segments = []
         segment = []
 
         for i in range(len(self.ranges) - 1):
-            if self.ranges[i] == float("nan"):
-                continue
-            elif segment is [] or self.ranges[i+1] - self.ranges[i] < d_thd:
-                segment.append(self.ranges[i])
+            segment.append((self.ranges[i], self.angles[i]))
+            if segment is [] or abs(self.ranges[i+1] - self.ranges[i]) < d_thd:
+                pass
             else:
                 segments.append(segment)
                 segment= []
