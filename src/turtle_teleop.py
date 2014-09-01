@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import roslib
+roslib.load_manifest('turtlebot_explore')
 import rospy
 
 from geometry_msgs.msg import Twist
