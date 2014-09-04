@@ -64,7 +64,7 @@ class MazeExplorer(object):
                 speed = self._speed
 
         elif closest_point and (not point_in_front or point_in_front[0] > self._spacing):
-            closest_point_xy = to_xy(closest_point)
+            closest_point_xy = to_xy(*closest_point)
             rotation = np.deg2rad(-90) + closest_point[1]
             speed = 0
             if np.fabs(rotation) < self._angle_margin:
@@ -74,7 +74,8 @@ class MazeExplorer(object):
         elif point_in_front and point_in_front[0] <= self._spacing:
             rotation = np.deg2rad(90) + point_in_front[1]
              
-
+        twist.linear.x = speed
+        twist.angular.z = rotation
         self.pub.publish(twist)
 
 
@@ -112,7 +113,7 @@ class MazeExplorer(object):
 
     def closest_point(self):
         try:
-            index, distance = min((i,x) for i, x enumerate(self.ranges) if to_xy(distance, self.angles[index])[0] > 0, key=lambda x: x[1])
+            index, distance = min(((i,x) for i, x in enumerate(self.ranges) if to_xy(x, self.angles[i])[0] > 0), key=lambda x: x[1])
             return (distance, self.angles[index])
         except ValueError:
             return False 
@@ -144,7 +145,7 @@ class MazeExplorer(object):
 
     def point_in_front(self):
         try:
-            index, distance = min((i,x) for i, x in enumerate(self.ranges) if np.fabs(self.angles[i]) < self._angle_margin, key=lambda x: x[1])
+            index, distance = min(((i,x) for i, x in enumerate(self.ranges) if np.fabs(self.angles[i]) < self._angle_margin), key=lambda x: x[1])
             return (distance, self.angles[index])
         except ValueError:
             return False 
