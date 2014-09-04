@@ -1,11 +1,11 @@
 import roslib
-roslib.load_manifest('turtlebot-explore')
+roslib.load_manifest('turtlebot_explore')
 import rospy
 import math
 import tf
 
-from geometry_msgs.msgs import Twist
-from nav_msgs.msgs import MapMetaData, OccupancyGrid
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import MapMetaData, OccupancyGrid
 
 
 class MazeExplorer(object):
@@ -13,12 +13,10 @@ class MazeExplorer(object):
     def __init__(self):
         self._buffer_cells = 10 
         self._occ_grid = None
-        self._map_header = None
         self._explored = set()
-        self.map_sub = rospy.Subscriber("/map",
-                               OccuapncyGrid, self._update_grid, queue_size = 3)
-        self.map_data_sub = rospy.Subscriber("/map_metadata",
-                               MapMetaData, self._update_map_data, queue_size = 3)
+        self._map_topic = '/slamGrid'
+        self.map_sub = rospy.Subscriber(self._map_topic,
+                               OccupancyGrid, self._update_grid, queue_size = 3)
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist) 
         self.speed = 2
          
@@ -26,18 +24,16 @@ class MazeExplorer(object):
     def _update_grid(self, data): 
         self._occ_grid = data
 
-    def _update_map_data(self, data):
-        self._map_header = data
-
-    def explore(self, listener, callback):
+    def explore(self, listener):
         # Get current position (I think /base_link is right)
-        if self._occ_grid is None or self._map_header is None:
-            return 
+        if self._occ_grid is None:
+            print ".."
+            continue
 
         try:
-            (position, quaternion) = listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+            (position, quaternion) = listener.lookupTransform(self._map_topic, '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            return 
+            continue
         twist = self._find_next_heading(position, quaternion)
         self.pub.publish(twist)
          
@@ -46,8 +42,8 @@ class MazeExplorer(object):
     def _find_next_heading(self, current_position, current_quaternion):
 
         # Find position in map
-        map_position = ((current_position[0] - self._map_header.origin[0]) / self._map_header.resolution,
-                        (current_position[1] - self._map_header.origin[1]) / self._map_header.resolution)
+        map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
+                        (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
 
 
         nearest_wall = self._find_nearest_wall(map_position)
@@ -60,8 +56,8 @@ class MazeExplorer(object):
             return None
 
         # Find absolute position
-        target_map_position = (target_position[0]*self._map_header.resolution,
-                               target_position[1]*self._map_header.resolution)
+        target_map_position = (target_position[0]*self._occ_grd.resolution,
+                               target_position[1]*self._occ_grd.resolution)
 
         # Adjust heading
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(current_quaternion)
@@ -70,7 +66,7 @@ class MazeExplorer(object):
         
         rotation = required_heading - yaw 
         if math.fabs(rotation) > math.pi:
-            rotation = rotation < 0 ? math.pi - rotation : rotation - math.pi
+            rotation = math.pi - rotation if rotation < 0 else rotation - math.pi
         
         # Create Twist 
         twist = Twist()
@@ -101,8 +97,8 @@ class MazeExplorer(object):
 
     def _find_nearest_wall(self, map_position):
 
-        max_distance = max(map_position[0], self._map_header.width - map_position[0]) + \
-                       max(map_posiiton[1], self._map_header.height - map_position[1])
+        max_distance = max(map_position[0], self._occ_grd.width - map_position[0]) + \
+                       max(map_posiiton[1], self._occ_grd.height - map_position[1])
 
         for i in range(1, max_distance):
             for j in range(0, i + 1):
@@ -129,12 +125,12 @@ class MazeExplorer(object):
         return None 
 
     def _cell_contains_wall(self, x, y):
-        if x > self._map_header.width - 1 or x < 0 or \
-           y > self.map_header.height - 1 or y < 0 or \
+        if x > self._occ_grd.width - 1 or x < 0 or \
+           y > self._occ_grd.height - 1 or y < 0 or \
            (x,y) in self._explored or not self._cell_can_be_reached(x,y):
                return False
-        index = y*self._map_header.width + x
-        if (self._occ_grid[index] >= 50):
+        index = y*self._occ_grd.width + x
+        if (self._occ_grid.data[index] >= 50):
             return True
         return False
 
