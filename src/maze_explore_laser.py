@@ -14,8 +14,8 @@ class MazeExplorer(object):
         self.ranges = []
         self.angles = []
         self.angle_min, self.angle_max, self.angle_increment = 0, 0, 0
-        self._spacing = 0.3
-        self._min_spacing = 0.1
+        self._spacing = 0.4
+        self._min_spacing = 0.2
         self._angle_margin = np.deg2rad(20)
         self._speed = 2
         self._last_rotation = 0
@@ -43,27 +43,35 @@ class MazeExplorer(object):
 
         # if nothing on the right
         if not closest_point:
+            print "nothing on right"
             # Arc movement
-            rotation = -1 
-            speed = self._speed
+            speed = 0.5
+            rotation = np.deg2rad(-90)
+        # if some in front & on right, turn left
+        elif point_in_front and point_in_front[0] <= self._spacing:
+            rotation = np.deg2rad(90) + point_in_front[1]
+            print "something in front"
         # if on right, nothing in front go forward
-        if closest_point and not point_in_front:
-            
+        else:
+            print "nothing in front"
             # adjust angle if too close - turn slightly away from the wall 
             if closest_point[0] <= self._min_spacing:
-                rotation = np.deg2rad(90) + closest_point[1] + 2*self._angle_margin 
+                rotation = np.deg2rad(90) - closest_point[1] + 2*self._angle_margin 
                 speed = self._speed
             # adjust angle if too far - turn slightly towards the wall 
             elif closest_point[0] >= self._spacing:
-                rotation = np.deg2rad(-90) - closest_point[1] + 2*self._angle_margin 
+                rotation = np.deg2rad(-90) + closest_point[1] + 2*self._angle_margin 
                 speed = self._speed
             # right distance from the wall
             else:
+                speed = self._speed
                 rotation = np.deg2rad(90) + closest_point[1]
 
             if np.fabs(rotation) < self._angle_margin:
                 rotation = 0
                 speed = self._speed
+            else: 
+                rotation = rotation * 0.6
 
             """
             if closest_point[0] < self._spacing:
@@ -71,9 +79,6 @@ class MazeExplorer(object):
             else:
                 rotation = np.deg2rad(90) + closest_point[1]
             """
-        # if some in front & on right, turn left
-        elif point_in_front and point_in_front[0] <= self._spacing:
-            rotation = np.deg2rad(90) + point_in_front[1]
              
         twist.linear.x = speed
         twist.angular.z = rotation
@@ -82,8 +87,8 @@ class MazeExplorer(object):
     # closest point on right
     def closest_point(self):
         try:
-            index, distance = min(((i,x) for i, x in enumerate(self.ranges) if to_xy(x, self.angles[i])[0] > 0), key=lambda x: x[1])
-            if distance < 2*self._spacing:
+            index, distance = min(((i,x) for i, x in enumerate(self.ranges) if self.angles[i] < -self._angle_margin and self.angles[i] > np.deg2rad(-90)), key=lambda x: x[1])
+            if distance < self._spacing + self._min_spacing:
                 return (distance, self.angles[index])
         except ValueError:
             pass
@@ -100,7 +105,7 @@ class MazeExplorer(object):
     def point_in_front(self):
         try:
             index, distance = min(((i,x) for i, x in enumerate(self.ranges) if np.fabs(self.angles[i]) < self._angle_margin), key=lambda x: x[1])
-            if distance < 2*self._spacing:
+            if distance < self._spacing:
                 return (distance, self.angles[index])
         except ValueError:
             pass
