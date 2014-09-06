@@ -8,45 +8,33 @@ from geometry_msgs.msg import Twist
 
 class TurtleTeleOp(object):
 
-    def __init__(self, speed=2, omega=0.5):
-        rospy.init_node('turtlebot_move')
+    def __init__(self, topic='cmd_vel_mux/input/navi', speed=2, rotation=0):
+        rospy.init_node('turtlebot_move', anonymous=True)
 
-        self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
+        self.pub = rospy.Publisher(topic, Twist)
 
-        self.speed = speed
-        self.omega = omega
         self.twist = Twist()
-        self.twist.linear.x, self.twist.angular.z = speed, 0     # speed, rotation
+        set_move(speed, rotation) 
 
-    def move(self, distance):
-         # move some distance? send a certain amount of messages?
+    def set_move(speed, rotation):
+        self.twist.linear.x, self.twist.angular.z = speed, rotation
 
-        some_cofactor = 10
-        num_msgs = some_cofactor * distance
-        self.__publish(num_msgs)
+    def move(self, speed):
+        self.set_move(speed, 0)
+        self.publish()
 
     def stop(self):
-        self.pub.publish(Twist())
+        self.publish(Twist())
 
     def turn(self, rotation):
-        some_cofactor = 10
-        num_msgs = some_cofactor * rotation
+        self.set_move(0, rotation)
+        self.publish()
 
-        self.twist.linear.x = 0
-        self.twist.angular.z = omega
-        self.__publish(num_msgs)
-
-    def __publish(self, num_msgs):
-        rospy.loginfo("moving now")
-        for i in range(num_msgs):
-            self.pub.publish(self.twist)
-            rospy.sleep(0.1)
-
-        rospy.loginfo("Stop")
-        self.pub.publish(Twist())        # defaults zero
+    def publish(self, twist=self.twist):
+        self.pub.publish(twist)
 
 if __name__ == '__main__':
     move = TurtleTeleOp()
-    move.move(1)
+    move.move(2)
 
 
