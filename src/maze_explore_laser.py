@@ -44,7 +44,7 @@ class MazeExplorer(object):
         # if nothing on the right
         if not closest_point:
             # Arc movement
-            rotation = 1 
+            rotation = -1 
             speed = self._speed
         # if on right, nothing in front go forward
         if closest_point and not point_in_front:
