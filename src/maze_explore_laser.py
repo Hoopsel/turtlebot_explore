@@ -15,11 +15,11 @@ class MazeExplorer(object):
         self.angles = []
         self.angle_min, self.angle_max, self.angle_increment = 0, 0, 0
         self._spacing = 0.3
+        self._min_spacing = 0.1
         self._angle_margin = np.deg2rad(20)
         self._speed = 2
         self._last_rotation = 0
         self._front_angle = np.deg2rad(10)
-        self._right_turn = True
 
 
         rospy.init_node("maze_explorer", anonymous=True)
@@ -43,31 +43,43 @@ class MazeExplorer(object):
 
         # if nothing on the right
         if not closest_point:
-            rotation = np.deg2rad(-30)
+            # Arc movement
+            rotation = 1 
             speed = self._speed
         # if on right, nothing in front go forward
-        if closest_point and (not point_in_front or point_in_front[0] > self._spacing):
-            print "nothing in front"
-            closest_point_xy = to_xy(*closest_point)
-            print closest_point
-            if closest_point[0] < self._spacing:
-                rotation = np.deg2rad(-90) - closest_point[1]
+        if closest_point and not point_in_front:
+            
+            # adjust angle if too close - turn slightly away from the wall 
+            if closest_point[0] <= self._min_spacing:
+                rotation = np.deg2rad(90) + closest_point[1] + 2*self._angle_margin 
+                speed = self._speed
+            # adjust angle if too far - turn slightly towards the wall 
+            elif closest_point[0] >= self._spacing:
+                rotation = np.deg2rad(-90) - closest_point[1] + 2*self._angle_margin 
+                speed = self._speed
+            # right distance from the wall
             else:
                 rotation = np.deg2rad(90) + closest_point[1]
-            speed = 0
+
             if np.fabs(rotation) < self._angle_margin:
                 rotation = 0
                 speed = self._speed
 
+            """
+            if closest_point[0] < self._spacing:
+                rotation = np.deg2rad(-90) - closest_point[1]
+            else:
+                rotation = np.deg2rad(90) + closest_point[1]
+            """
         # if some in front & on right, turn left
         elif point_in_front and point_in_front[0] <= self._spacing:
-            print "something in front"
-            rotation = np.deg2rad(-90) + point_in_front[1]
+            rotation = np.deg2rad(90) + point_in_front[1]
              
         twist.linear.x = speed
         twist.angular.z = rotation
         self.pub.publish(twist)
 
+    # closest point on right
     def closest_point(self):
         try:
             index, distance = min(((i,x) for i, x in enumerate(self.ranges) if to_xy(x, self.angles[i])[0] > 0), key=lambda x: x[1])
