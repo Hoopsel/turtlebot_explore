@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
+from std_msgs.msg import String
 
 class MazeExplorer(object):
     def __init__(self):
@@ -23,9 +24,17 @@ class MazeExplorer(object):
 
 
         rospy.init_node("maze_explorer", anonymous=True)
-        self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
+        self.sub = None
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
+        self.cmd_sub = rospy.Subscriber('turtle_cmd', String, self.wait_cmd)
         rospy.spin()
+
+    def wait_cmd(self, data):
+        if data.command = "explore":            # start subscriber
+            self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
+        else:                                   # if some other command, pause
+            self.sub = None
+
 
     def scan_callback(self, data):
         ranges = data.ranges
