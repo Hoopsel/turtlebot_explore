@@ -32,7 +32,7 @@ class MazeExplorer(object):
     def wait_cmd(self, data):
         if data.command = "explore":            # start subscriber
             self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
-        else:                                   # if some other command, pause
+        elif data.command = "stop explore":     # stop exploring
             self.sub = None
 
 
