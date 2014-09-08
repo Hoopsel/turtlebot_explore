@@ -24,14 +24,14 @@ class MazeExplorer(object):
 
         rospy.init_node("maze_explorer", anonymous=True)
         self.sub = None
-        self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
+        self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=3)
         self.cmd_sub = rospy.Subscriber('turtle_cmd', String, self.wait_cmd)
         rospy.spin()
 
     def wait_cmd(self, data):
-        if data.command = "explore":            # start subscriber
+        if data.command == "explore":            # start subscriber
             self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
-        elif data.command = "stop explore":     # stop exploring
+        elif data.command == "stop explore":     # stop exploring
             self.sub = None
 
 

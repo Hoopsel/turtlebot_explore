@@ -1,6 +1,21 @@
 <launch>
     <param name="use_sim_time" value="false" />
 
-    <node pkg=".." name=".." type=".." />
+    <rosparam>
+        beacons:
+            beacon0:
+                top:    "pink"
+                bottom: "blue"
+            beacon1:
+                top:    "yellow"
+                bottom: "pink"
+            beacon2:
+                top:    "pink"
+                bottom: "green"
+    </rosparam>
+
+    <node pkg="turtlebot_explore" name="maze_solver" type="maze_solver.py" output="screen" />
+    <node pkg="turtlebot_explore" name="pole_detector" type="pole_detector.py" output="screen" />
+    <node pkg="turtlebot_explore" name="maze_explore_laser" type="maze_explore_laser.py" output="screen" />
 
 </launch>

@@ -10,7 +10,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
-#from turtlebot_explore.msg import Beacon
+from turtlebot_explore.msg import Beacon
 
 from scan_detector import ScanDetector
 
@@ -21,7 +21,12 @@ class PoleDetector:
         self.bridge = CvBridge()
         self.cv_image = None
         self.scanner = ScanDetector()
-#        self.pub = rospy.Publisher('turtlebot_beacon', Beacon)
+        self._bound_size = 80
+        self._bound_margin = 20
+        self.pub = rospy.Publisher('turtlebot_beacon', Beacon, queue_size=1)
+        self.win_name = 'image'
+        cv2.namedWindow(self.win_name)
+        
 
     def callback(self, data):
         try:
@@ -32,32 +37,33 @@ class PoleDetector:
         self.process_image()
 
     def process_image(self):
-        yellowBox = self.find_bounding('y')
-        blueBox = self.find_bounding('b')
-        greenBox = self.find_bounding('g')
-        pinkBox = self.find_bounding('p')
+        bounds = {}
+        for c in ['yellow', 'green', 'blue', 'pink']:
+            bounds[c] = self.find_bounding(c)
 
         im = self.cv_image        # show result
-        found = False             # condition for if beacon is seen?
-        for box in [yellowBox, blueBox, greenBox, pinkBox]:
+        heights = []
+        for c, box in bounds.items():
+            if box is None: continue
             x, y, w, h = box
-            if w < 100 and h < 100:
-                cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                print 'box found!'
-                found = True
+            cv2.rectangle(im, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            heights.append((c, y))
 
-        if found:
-            cv2.imshow("show", im)
-            cv2.waitKey()
-            pole_pos = self.scanner.get_circle_pos()
-            if pole_pos is not None:
-                beacon_found(pole_pos, 'b', 'g') # replace with actual top, bot colour
+        heights = sorted(heights, key=lambda x: x[1])
+
+        cv2.imshow(self.win_name, im)
+        cv2.waitKey(1)
+        if len(heights) == 2:
+            rospy.loginfo('beacon found %s on %s' % (heights[0][0], heights[-1][0]))
+            #pole_pos = self.scanner.get_circle_pos()
+            self.beacon_found((0, 0), heights[0][0], heights[-1][0]) # replace with actual top, bot colour
 
     def set_image(self, im):
         self.cv_image = im
+        cv2.imshow(self.win_name, im)
 
     def beacon_found(self, pos, top_colour, bot_colour):
-#        msg = Beacon()
+        msg = Beacon()
         msg.top_colour = top_colour
         msg.bot_colour = bot_colour
         msg.x = pos[0]
@@ -66,14 +72,14 @@ class PoleDetector:
 
     def find_bounding(self, colour):
         # set colour range based on colour specified
-        if colour == 'y':
-            colour_min, colour_max = np.array([0,200,200], np.uint8), np.array([225,255,255], np.uint8)
-        elif colour == 'b':
-            colour_min, colour_max = np.array([30,80,120], np.uint8), np.array([120,205,255], np.uint8)
-        elif colour == 'g':
-            colour_min, colour_max = np.array([50,85,55], np.uint8), np.array([120,240,180], np.uint8)
-        elif colour == 'p':
-            colour_min, colour_max = np.array([140,100,130], np.uint8), np.array([255,180,240], np.uint8)
+        if colour == 'yellow':
+            colour_min, colour_max = np.array([0,180,180], np.uint8), np.array([180,255,255], np.uint8)
+        elif colour == 'blue':
+            colour_min, colour_max = np.array([80,115,140], np.uint8), np.array([120,190,240], np.uint8)
+        elif colour == 'green':
+            colour_min, colour_max = np.array([60,80,80], np.uint8), np.array([100,170,170], np.uint8)
+        elif colour == 'pink':
+            colour_min, colour_max = np.array([130,100,130], np.uint8), np.array([255,180,255], np.uint8)
         else:
             return None
 
@@ -83,35 +89,36 @@ class PoleDetector:
         ret, thd = cv2.threshold(frame_thd, 127, 255, 0)
         contours, hierarchy = cv2.findContours(thd, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        # find largest contour in set
-        areas = [cv2.contourArea(c) for c in contours]
-        largest = np.argmax(areas)
-        contour = contours[largest]
+        boundings = [cv2.boundingRect(c) for c in contours]
+        for bounding in boundings:
+            x, y, w, h = bounding
+            #print x,y,w,h,colour
+            if self._in_bound(w) and self._in_bound(h):
+                return bounding
 
-        bounding = cv2.boundingRect(contour)
-        return bounding
+        return None # no matches
 
-def main(args):
+    def _in_bound(self, x):
+        return np.fabs(x - self._bound_size) < self._bound_margin
+
+def main():
     detector = PoleDetector()
     rospy.init_node('pole_detector', anonymous=True)
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        print "shutting down"
+        print "shutting downs"
 
     cv2.destroyAllWindows()
 
 def test():
     pd = PoleDetector()
-    im = cv2.imread('/home/andrew/ros/indigo/src/turtlebot_explore/assets/image.jpg')
+    im = cv2.imread('/home/z3333567/catkin_ws/src/turtlebot-explore/assets/image.jpg')
     #im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
     pd.set_image(im)
     pd.process_image()
 
-
-    cv2.imshow("show", im)
-    cv2.waitKey()
     cv2.destroyAllWindows()
 
 
-if __name__ == '__main__': test()
+if __name__ == '__main__': main()

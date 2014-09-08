@@ -18,7 +18,7 @@ class MazeSolver(object):
     def __init__(self):
         self.map_sub = rospy.Subscriber('/slamGrid', OccupancyGrid, self._update_grid, queue_size = 1)
         self.beacon_sub = rospy.Subscriber('/turtlebot_beacon', Beacon, self._beacon_found, queue_size = 1) 
-        self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist)
+        self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=1)
         self.explore_pub = rospy.Publisher('/turtle_cmd', String, queue_size=1)
         self._occ_grid = None
         self.map_position = None
@@ -35,6 +35,7 @@ class MazeSolver(object):
             key = "beacon%d" % i
             beacon = beacons[key]
             self.goals.append((beacon["top"], beacon["bottom"]))
+        rospy.loginfo(self.goals)
 
     # listen for map updates
     def _update_grid(self, data):
@@ -57,6 +58,7 @@ class MazeSolver(object):
 
     # listen for beacon found
     def _beacon_found(self, data):
+        if self.map_position is None: return
           
         # figure out beacon position and target position for beacon 
         # rotation = -self.heading 
