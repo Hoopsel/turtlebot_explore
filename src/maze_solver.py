@@ -19,7 +19,8 @@ class MazeSolver(object):
         self.map_sub = rospy.Subscriber('/slamGrid', OccupancyGrid, self._update_grid, queue_size = 1)
         self.beacon_sub = rospy.Subscriber('/turtlebot_beacon', Beacon, self._beacon_found, queue_size = 1) 
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=1)
-        self.explore_pub = rospy.Publisher('/turtle_cmd', String, queue_size=1)
+        self.explore_pub = rospy.Publisher('turtle_cmd', String, queue_size=1000)
+        self.explore_pub.publish('WHYYEYOREOR')
         self._occ_grid = None
         self.map_position = None
         self.beacons = {} #store as beacon colours : position -> (pink,blue) : (27,32)
@@ -86,7 +87,7 @@ class MazeSolver(object):
     
     
     def start_explore(self):
-        self.explore_pub.publish("explore") # some duplication here, not sure py version of headers are
+        self.explore_pub.publish('explore') # some duplication here, not sure py version of headers are
 
     def stop_explore(self):
         self.explore_pub.publish("stop explore") 

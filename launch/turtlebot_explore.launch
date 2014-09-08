@@ -17,5 +17,6 @@
     <node pkg="turtlebot_explore" name="maze_solver" type="maze_solver.py" output="screen" />
     <node pkg="turtlebot_explore" name="pole_detector" type="pole_detector.py" output="screen" />
     <node pkg="turtlebot_explore" name="maze_explore_laser" type="maze_explore_laser.py" output="screen" />
+    <include file="$(find crosbot_graphslam)/launch/crosbot_graphslam.launch" />
 
 </launch>
