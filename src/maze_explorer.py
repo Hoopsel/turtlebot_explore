@@ -142,7 +142,7 @@ class MazeExplorer(object):
 def listener(explorer):
     tflistener = tf.TransformListener()
     rate = rospy.Rate(10.0)
-    explorer.explore(tf) 
+    explorer.explore(tflistener) 
     rospy.spin()
 
 
