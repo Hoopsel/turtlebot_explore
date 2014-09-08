@@ -53,7 +53,7 @@ class ScanDetector(object):
         return segments
 
     def find_circle(self, segment):
-        if len(segment) < 10: return None                       # ignore small segments, calculations result in false positive
+        if len(segment) < 10: return None    # ignore small segments, calculations result in false positive
         xy = [(r*np.cos(a), r*np.sin(a)) for r, a in segment]
 
         x1, y1 = xy[0]

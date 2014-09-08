@@ -8,29 +8,32 @@ from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
-class ImageConverter:
+class PoleDetector:
 
     def __init__(self):
-        print "init1"
         self.image_sub = rospy.Subscriber("/camera/rgb/image_color",Image, self.callback, queue_size = 1)
-        print "init2"
         self.bridge = CvBridge()
-        capture = imgage_sub
+        self.cv_image = None
+        #capture = imgage_sub <- this doesnt work. image is in data var in the callback
         #Creates the visuals for us, don't need this for the robots internal workings
-        frame = cv.QueryFrame(capture)
+        # image created in bridge in callback.
+        """frame = cv.QueryFrame(capture)
         frame_size = cv.GetSize(frame)
         test=cv.CreateImage(cv.GetSize(frame),8,3)
         img2=cv.CreateImage(cv.GetSize(frame),8,3)
+        """
         cv.NamedWindow("Real",0)
         cv.NamedWindow("Threshold",0)
 
     def callback(self, data):
         print "callback"
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8") # image created here
         except CvBridgeError as e:
             print e
-        print "entering while"
+
+        # why run ten times?
+        
         i=0
         while(i<10):
             yellowY = colourWorkings('y')
@@ -102,8 +105,8 @@ class ImageConverter:
         return imgthreshold
 
     def colourWorkings(color):
-    #   THE SAME BASIS FOR ALL COLOURS
-        color_image = cv.QueryFrame(capture)
+    #   THE SAME BASIS FOR ALL COLOUR
+        color_image = self.cv_image # < this may be none! must handle
         imdraw=cv.CreateImage(cv.GetSize(frame),8,3)
         cv.SetZero(imdraw)
         cv.Flip(color_image,color_image,1)
@@ -146,8 +149,8 @@ class ImageConverter:
     
 
 def main(args):
-    ic = ImageConverter()
-    rospy.init_node('image_converter', anonymous=True)
+    detector = PoleDetector()
+    rospy.init_node('pole_detector', anonymous=True)
     try:
         rospy.spin()
     except KeyboardInterrupt:
