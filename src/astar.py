@@ -1,11 +1,9 @@
-from math import sqrt
-
 class AStar(object):
     def __init__(self, graph):
         self.graph = graph
         
     def heuristic(self, node, start, end):
-        return sqrt((end.x - node.x)**2 + (end.y - node.y)**2) # euclidean distance
+        raise NotImplementedError
 
     def search(self, start, end):
         closedset = set()
@@ -45,21 +43,11 @@ class AStar(object):
         return path[::-1]                                               # reverse reversed path
 
 
-class Node():
-    def __init__(self, x, y):
-        self.x, self.y = x, y
+class Node(object):
+    def __init__(self):
         self.g, self.h = 0, 0
         self.parent = None
 
     def cost(self, other):
-        diagonal = abs(self.x - other.x) == 1 and abs(self.y - other.y) == 1
-        return 15 if diagonal else 5
-
-    def __repr__(self):
-        return '(%d, %d)' % (self.x, self.y)
-
-
-
-
-
+        raise NotImplementedError
     
