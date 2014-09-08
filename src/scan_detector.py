@@ -10,10 +10,10 @@ class ScanDetector(object):
         self.ranges = []
         self.angles = []
         self.angle_min, self.angle_max, self.angle_increment = 0, 0, 0
+        self.sub = None
 
         if not is_sim:
             rospy.init_node("scan_detector", anonymous=True)
-            self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
             rospy.spin()   # ??? do we want to run nodes separately so they run all the time?
 
     def set_values(self, ranges, angle_min, angle_max, angle_increment):
@@ -28,11 +28,14 @@ class ScanDetector(object):
         self.angles = [angle_min + i * angle_increment for i, j in enumerate(ranges) if j > 0]
 
         segments = self.segmentise()
-        print "num segments: %d" % len(segments)
+        circle_centre = None
         for segment in segments:
             circle_centre = self.find_circle(segment)
             if circle_centre is not None:
                 print "circle found at (%f, %f)" % circle_centre
+                break
+
+        self.detected = circle_centre
 
 
     def segmentise(self):
@@ -64,6 +67,12 @@ class ScanDetector(object):
 
         if abs(self._distance((xm, ym), centre) - radius) < 0.03: return centre
         else: return None
+
+    def get_circle_pos(self):
+        scan = rospy.wait_for_message("scan", LaserScan)
+        scan_callback(scan)
+        return self.detected
+
 
     def _distance(self, x, y):
         return np.linalg.norm(np.array(x) - np.array(y))
