@@ -59,14 +59,17 @@ class MazeSolver(object):
     def _beacon_found(self, data):
           
         # figure out beacon position and target position for beacon 
-        rotation = -self.heading 
+        # rotation = -self.heading 
 
         # rotate point so it is as if robot is facing north
-        x_dist = (data.x * np.cos(rotation) - data.y * np.sin(rotation)) / self._occ_grid.resolution
-        y_dist = (data.x * np.sin(rotation) + data.y * np.cos(rotation)) / self._occ_grid.resolution
+        # x_dist = (data.x * np.cos(rotation) - data.y * np.sin(rotation)) / self._occ_grid.resolution
+        # y_dist = (data.x * np.sin(rotation) + data.y * np.cos(rotation)) / self._occ_grid.resolution
 
-        x = self.map_position[0] + x_dist
-        y = self.map_position[1] + y_dist
+        # x = self.map_position[0] + x_dist
+        # y = self.map_position[1] + y_dist
+
+        x = self.map_position[0]
+        y = self.map_position[1]
 
         self.beacons[(data.top_colour, data.bot_colour)] = (x,y) 
 
