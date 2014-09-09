@@ -21,8 +21,9 @@ class PoleDetector:
         self.bridge = CvBridge()
         self.cv_image = None
         self.scanner = ScanDetector()
-        self._bound_size = 80
-        self._bound_margin = 20
+        self._bound_size = 60
+        self._bound_margin = 30
+        self._kernel = np.ones((5,5), np.uint8)
         self.pub = rospy.Publisher('turtlebot_beacon', Beacon, queue_size=1)
         self.win_name = 'image'
         cv2.namedWindow(self.win_name)
@@ -37,6 +38,7 @@ class PoleDetector:
         self.process_image()
 
     def process_image(self):
+        self.cv_image = cv2.morphologyEx(self.cv_image, cv2.MORPH_CLOSE, self._kernel)
         bounds = {}
         for c in ['yellow', 'green', 'blue', 'pink']:
             bounds[c] = self.find_bounding(c)
@@ -53,7 +55,7 @@ class PoleDetector:
 
         cv2.imshow(self.win_name, im)
         cv2.waitKey(1)
-        if len(heights) == 2:
+        if len(heights) == 2 and np.fabs(heights[0][1] - heights[1][1]) < 2*self._bound_size:
             rospy.loginfo('beacon found %s on %s' % (heights[0][0], heights[-1][0]))
             #pole_pos = self.scanner.get_circle_pos()
             self.beacon_found((0, 0), heights[0][0], heights[-1][0]) # replace with actual top, bot colour
@@ -73,25 +75,28 @@ class PoleDetector:
     def find_bounding(self, colour):
         # set colour range based on colour specified
         if colour == 'yellow':
-            colour_min, colour_max = np.array([0,180,180], np.uint8), np.array([180,255,255], np.uint8)
+            colour_min, colour_max = np.array([0,160,160], np.uint8), np.array([180,255,255], np.uint8)
         elif colour == 'blue':
             colour_min, colour_max = np.array([80,115,140], np.uint8), np.array([120,190,240], np.uint8)
         elif colour == 'green':
-            colour_min, colour_max = np.array([60,80,80], np.uint8), np.array([100,170,170], np.uint8)
+            colour_min, colour_max = np.array([60,80,40], np.uint8), np.array([100,220,170], np.uint8)
         elif colour == 'pink':
-            colour_min, colour_max = np.array([130,100,130], np.uint8), np.array([255,180,255], np.uint8)
+            colour_min, colour_max = np.array([130,80,80], np.uint8), np.array([255,220,255], np.uint8)
         else:
             return None
 
         im = self.cv_image # < this may be none! must handle
+        im_h, im_w, im_d = im.shape
         hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
         frame_thd = cv2.inRange(hsv_img, colour_min, colour_max)
         ret, thd = cv2.threshold(frame_thd, 127, 255, 0)
+        cv2.imshow(self.win_name,thd)
         contours, hierarchy = cv2.findContours(thd, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         boundings = [cv2.boundingRect(c) for c in contours]
         for bounding in boundings:
             x, y, w, h = bounding
+            if y > im_h / 2: continue
             #print x,y,w,h,colour
             if self._in_bound(w) and self._in_bound(h):
                 return bounding

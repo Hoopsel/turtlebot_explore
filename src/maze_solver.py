@@ -58,8 +58,13 @@ class MazeSolver(object):
 
     # listen for beacon found
     def _beacon_found(self, data):
-        if self.map_position is None: return
-          
+
+        if self.map_position is None: 
+            print "Position is none"
+            return
+
+        print "Not none"
+
         # figure out beacon position and target position for beacon 
         # rotation = -self.heading 
 
@@ -86,10 +91,14 @@ class MazeSolver(object):
     
     
     def start_explore(self):
-        self.explore_pub.publish('explore') # some duplication here, not sure py version of headers are
+        for i in range(3):
+            self.explore_pub.publish('explore') # some duplication here, not sure py version of headers are
+            rospy.sleep(1.0)
 
     def stop_explore(self):
-        self.explore_pub.publish("stop explore") 
+        for i in range(3):
+            self.explore_pub.publish("stop explore") 
+            rospy.sleep(1.0)
 
     def solve_maze():
 

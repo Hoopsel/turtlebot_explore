@@ -4,14 +4,11 @@
     <rosparam>
         beacons:
             beacon0:
-                top:    "pink"
-                bottom: "blue"
-            beacon1:
-                top:    "yellow"
+                top:    "green"
                 bottom: "pink"
-            beacon2:
-                top:    "pink"
-                bottom: "green"
+            beacon1:
+                top:    "blue"
+                bottom: "pink"
     </rosparam>
 
     <node pkg="turtlebot_explore" name="maze_solver" type="maze_solver.py" output="screen" />
