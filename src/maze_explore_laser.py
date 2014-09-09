@@ -17,7 +17,7 @@ class MazeExplorer(object):
         self._spacing = 0.4
         self._min_spacing = 0.2
         self._angle_margin = np.deg2rad(20)
-        self._speed = 2
+        self._speed = 2 
         self._last_rotation = 0
         self._front_angle = np.deg2rad(10)
 
@@ -54,18 +54,18 @@ class MazeExplorer(object):
             speed = 0.5
             rotation = np.deg2rad(-90)
         # if some in front & on right, turn left
-        elif point_in_front and point_in_front[0] <= self._spacing:
+        elif point_in_front and point_in_front[0] <= self._min_spacing:
             rotation = np.deg2rad(90) + point_in_front[1]
         # if on right, nothing in front go forward
         else:
             # adjust angle if too close - turn slightly away from the wall 
             if closest_point[0] <= self._min_spacing:
-                rotation = np.deg2rad(90) - closest_point[1] + 2*self._angle_margin 
-                speed = self._speed
+                rotation = np.deg2rad(90) - closest_point[1] + 1.25*self._angle_margin 
+                speed = self._speed * 0.75
             # adjust angle if too far - turn slightly towards the wall 
             elif closest_point[0] >= self._spacing:
-                rotation = np.deg2rad(-90) + closest_point[1] + 2*self._angle_margin 
-                speed = self._speed
+                rotation = np.deg2rad(-90) + closest_point[1] + 1.25*self._angle_margin 
+                speed = self._speed * 0.75
             # right distance from the wall
             else:
                 speed = self._speed
