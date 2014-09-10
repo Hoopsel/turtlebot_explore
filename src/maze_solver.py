@@ -47,7 +47,8 @@ class MazeSolver(object):
             try:
                 #now = rospy.Time.now()
                 #listener.waitForTransform("/odom_combined", "/base_footprint", now, rospy.Duration(1.0))
-                (position, quaternion) = listener.lookupTransform('/odom_combined', '/base_footprint', rospy.Time(0))
+                # could be /slam/slam_frame /icp/odom_frame /odom and second could be /base_footprint or /base_link
+                (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_footprint', rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Transformation error")
                 continue

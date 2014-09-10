@@ -56,9 +56,6 @@ class MazeExplorer(object):
         speed = 0
         rotation = 0
 
-        if point_in_front and position_in_front[0] > 0.75 and point_in_front[0] <= 1:
-            self.take_picture()
-
         # if nothing on the right
         if not closest_point:
             rospy.logdebug("Nothing on right")
