@@ -46,8 +46,8 @@ class MazeSolver(object):
         while not self._finished:
             try:
                 now = rospy.Time.now()
-                listener.waitForTransform("/slamGrid", "/base_footprint", now, rospy.Duration(1.0))
-                (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_footprint', now)
+                listener.waitForTransform("/odom_combined", "/base_footprint", now, rospy.Duration(1.0))
+                (position, quaternion) = listener.lookupTransform('/odom_combined', '/base_footprint', now)
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Transformation error")
                 continue
