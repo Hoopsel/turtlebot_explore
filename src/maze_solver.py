@@ -43,17 +43,14 @@ class MazeSolver(object):
         self._occ_grid = data
 
     def update_position(self, listener):
+        rate = rospy.Rate(10.0)
         while not self._finished:
             try:
-                #now = rospy.Time.now()
-                #listener.waitForTransform("/odom_combined", "/base_footprint", now, rospy.Duration(1.0))
-                # could be /slam/slam_frame /icp/odom_frame /odom and second could be /base_footprint or /base_link
                 (position, quaternion) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Transformation error")
                 continue
 
-            # Find position in map
             self.map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
                                 (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
             
@@ -61,8 +58,7 @@ class MazeSolver(object):
             
             (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(quaternion)
             self.heading = yaw
-
-
+            rate.sleep()
     # listen for beacon found
     def _beacon_found(self, data):
 
@@ -148,7 +144,6 @@ def main():
     maze_solver = MazeSolver()
     maze_solver.start_explore()
     listener = tf.TransformListener()
-    rospy.Rate(10.0)
     maze_solver.update_position(listener)
 
 if __name__ == '__main__':
