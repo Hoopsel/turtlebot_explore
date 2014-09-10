@@ -28,6 +28,7 @@ class MazeSolver(object):
         self._angle_margin = np.deg2rad(10) 
         self._speed = 2
         self._unpack_goals()
+        self._finished = False
     
     def _unpack_goals(self):
         beacons = rospy.get_param('beacons')
@@ -42,20 +43,23 @@ class MazeSolver(object):
         self._occ_grid = data
 
     def update_position(self, listener):
-        try:
-            (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_link', rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            rospy.logerr("Transformation error")
-            return
+        while not self._finished:
+            try:
+                now = rospy.Time.now()
+                listener.waitForTransform("/slamGrid", "/base_footprint", now, rospy.Duration(1.0))
+                (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_footprint', now)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                rospy.logerr("Transformation error")
+                continue
 
-        # Find position in map
-        self.map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
-                            (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
-        
-        rospy.logdebug("Map position %s and heading %s", str(position), str(quaternion))
-        
-        (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(quaternion)
-        self.heading = yaw
+            # Find position in map
+            self.map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
+                                (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
+            
+            rospy.logdebug("Map position %s and heading %s", str(position), str(quaternion))
+            
+            (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(quaternion)
+            self.heading = yaw
 
 
     # listen for beacon found
@@ -110,8 +114,10 @@ class MazeSolver(object):
             path = grid_search(self._occ_grid.data, self._occ_grid.width, self._occ_grid.height, self.map_position, position)
             for coord in path:
                 move(*coord)
-            print "Reached goal " + goal
-        print "Finished maze"
+            rospy.loginfo("Reached goal %s", str(goal))
+        rospy.loginfo("Solved maze")
+        self._finished = True
+
 
     def move(to_x, to_y):
 
@@ -143,7 +149,6 @@ def main():
     listener = tf.TransformListener()
     rospy.Rate(10.0)
     maze_solver.update_position(listener)
-    rospy.spin()
 
 if __name__ == '__main__':
     main()

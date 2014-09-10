@@ -17,7 +17,7 @@ class MazeExplorer(object):
         self._spacing = 0.4
         self._min_spacing = 0.25
         self._angle_margin = np.deg2rad(20)
-        self._speed = 0.3  
+        self._speed = 0.4  
         self._omega = 0.3
         self._last_rotation = 0
         self._front_angle = np.deg2rad(10)
