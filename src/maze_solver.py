@@ -45,12 +45,14 @@ class MazeSolver(object):
         try:
             (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            rospy.logerr("Transformation error")
             return
 
         # Find position in map
         self.map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
                             (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
         
+        rospy.logdebug("Map position %s and heading %s", str(position), str(quaternion))
         
         (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(quaternion)
         self.heading = yaw
@@ -60,10 +62,8 @@ class MazeSolver(object):
     def _beacon_found(self, data):
 
         if self.map_position is None: 
-            print "Position is none"
+            rospy.logdebug("Beacon found, no current position")
             return
-
-        print "Not none"
 
         # figure out beacon position and target position for beacon 
         # rotation = -self.heading 
@@ -79,6 +79,9 @@ class MazeSolver(object):
         y = self.map_position[1]
 
         self.beacons[(data.top_colour, data.bot_colour)] = (x,y) 
+
+        rospy.loginfo("%s on %s beacon found at (%d, %d)", data.top_colour, data.bot_colour)
+
 
         # check if last beacon found
         if not set(self.goals).issubset(self.beacons.keys()):
@@ -134,7 +137,7 @@ class MazeSolver(object):
 
          
 def main():
-    rospy.init_node('turtlebot_maze_solver')
+    rospy.init_node('turtlebot_maze_solver', log_level=rospy.DEBUG)
     maze_solver = MazeSolver()
     maze_solver.start_explore()
     listener = tf.TransformListener()

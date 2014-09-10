@@ -23,9 +23,10 @@ class MazeExplorer(object):
         self._front_angle = np.deg2rad(10)
 
 
-        rospy.init_node("maze_explorer", anonymous=True)
+        rospy.init_node("maze_explorer", anonymous=True, log_level=rospy.DEBUG)
         self.sub = None
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=3)
+        self.image_pub = rospy.Publisher("maze_explorer/process_image", String, queue_size=1)
         self.cmd_sub = rospy.Subscriber('turtle_cmd', String, self.wait_cmd)
         rospy.spin()
 
@@ -34,6 +35,12 @@ class MazeExplorer(object):
             self.sub = rospy.Subscriber("scan", LaserScan, self.scan_callback)
         elif data.data == "stop explore":     # stop exploring
             self.sub = None
+
+    def take_picture(self):
+        for i in range(3):
+            rospy.logdebug("Sending message to take picture")
+            self.image_pub.publish("take_picture")
+            rospy.sleep(1.0)
 
 
     def scan_callback(self, data):
@@ -49,17 +56,23 @@ class MazeExplorer(object):
         speed = 0
         rotation = 0
 
+        if point_in_front and position_in_front[0] > 0.75 and point_in_front[0] <= 1:
+            self.take_picture()
+
         # if nothing on the right
         if not closest_point:
+            rospy.logdebug("Nothing on right")
             # Arc movement
             speed = 0.5
             rotation = np.deg2rad(-90)
         # if some in front & on right, turn left
         elif point_in_front and point_in_front[0] <= self._spacing:
+            rospy.logdebug("Something in front and on right")
             rotation = np.deg2rad(90) + point_in_front[1]
             #rospy.sleep(1.0)                 # wait for camera
         # if on right, nothing in front go forward
         else:
+            rospy.logdebug("Wall on right")
             # adjust angle if too close - turn slightly away from the wall 
             if closest_point[0] <= self._min_spacing:
                 rotation = np.deg2rad(90) - closest_point[1] + self._angle_margin 
@@ -78,10 +91,13 @@ class MazeExplorer(object):
                 rotation = 0
                 speed = self._speed
         
+        rotation = rotation*0.6
+        """ 
         if rotation < -self._omega: 
             rotation = -self._omega
         elif rotation > self._omega:
             rotation = self._omega
+        """
 
         twist.linear.x = speed
         twist.angular.z = rotation

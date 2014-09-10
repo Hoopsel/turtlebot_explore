@@ -10,7 +10,8 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
-from turtlebot_explore.msg import Beacon
+from turtlebot_explore.msg import Beacon 
+
 
 from scan_detector import ScanDetector
 
@@ -25,6 +26,7 @@ class PoleDetector:
         self._bound_margin = 30
         self._kernel = np.ones((5,5), np.uint8)
         self.pub = rospy.Publisher('turtlebot_beacon', Beacon, queue_size=1)
+        self.process_sub = rospy.Subscriber("maze_explorer/process_image", String, self.process_image, queue_size = 1) 
         self.win_name = 'image'
         cv2.namedWindow(self.win_name)
         
@@ -34,10 +36,12 @@ class PoleDetector:
             self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8") # image created here
         except CvBridgeError as e:
             print e 
+        #self.process_image("take_picture")
 
-        self.process_image()
+    def process_image(self, msg):
+        if msg != "take_picture":
+            return
 
-    def process_image(self):
         self.cv_image = cv2.morphologyEx(self.cv_image, cv2.MORPH_CLOSE, self._kernel)
         bounds = {}
         for c in ['yellow', 'green', 'blue', 'pink']:
