@@ -16,7 +16,7 @@ from grid_search import grid_search
 class MazeSolver(object):
 
     def __init__(self):
-        self.map_sub = rospy.Subscriber('/slamGrid', OccupancyGrid, self._update_grid, queue_size = 1)
+        self.map_sub = rospy.Subscriber('/map', OccupancyGrid, self._update_grid, queue_size = 1)
         self.beacon_sub = rospy.Subscriber('/turtlebot_beacon', Beacon, self._beacon_found, queue_size = 1) 
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=1)
         self.explore_pub = rospy.Publisher('turtle_cmd', String, queue_size=1)
@@ -48,7 +48,7 @@ class MazeSolver(object):
                 #now = rospy.Time.now()
                 #listener.waitForTransform("/odom_combined", "/base_footprint", now, rospy.Duration(1.0))
                 # could be /slam/slam_frame /icp/odom_frame /odom and second could be /base_footprint or /base_link
-                (position, quaternion) = listener.lookupTransform('/slamGrid', '/base_footprint', rospy.Time(0))
+                (position, quaternion) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Transformation error")
                 continue

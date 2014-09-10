@@ -60,8 +60,8 @@ class MazeExplorer(object):
         if not closest_point:
             rospy.logdebug("Nothing on right")
             # Arc movement
-            speed = 0.5
-            rotation = np.deg2rad(-90)
+            speed = 0.3
+            rotation = np.deg2rad(-60)
         # if some in front & on right, turn left
         elif point_in_front and point_in_front[0] <= self._spacing:
             rospy.logdebug("Something in front and on right")
