@@ -11,14 +11,15 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 class MazeExplorer(object):
+    """explore a maze using wall-following behaviour"""
     def __init__(self):
         self.ranges = []
         self.angles = []
         self._spacing = 0.4
         self._min_spacing = 0.25
         self._angle_margin = np.deg2rad(20)
-        self._speed = 0.4  
-        self._omega = 0.3
+        self._speed = 0.4                           # m/s 
+        self._omega = 0.3                           # rad/s
         self._last_rotation = 0
         self._front_angle = np.deg2rad(10)
 
@@ -58,18 +59,15 @@ class MazeExplorer(object):
 
         # if nothing on the right
         if not closest_point:
-            rospy.logdebug("Nothing on right")
             # Arc movement
             speed = 0.3
             rotation = np.deg2rad(-60)
         # if some in front & on right, turn left
         elif point_in_front and point_in_front[0] <= self._spacing:
-            rospy.logdebug("Something in front and on right")
             rotation = np.deg2rad(90) + point_in_front[1]
             #rospy.sleep(1.0)                 # wait for camera
         # if on right, nothing in front go forward
         else:
-            rospy.logdebug("Wall on right")
             # adjust angle if too close - turn slightly away from the wall 
             if closest_point[0] <= self._min_spacing:
                 rotation = np.deg2rad(90) - closest_point[1] + self._angle_margin 

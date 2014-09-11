@@ -86,7 +86,7 @@ class PoleDetector:
         else:
             return None
 
-        im = self.cv_image # < this may be none! must handle
+        im = self.cv_image 
         im_h, im_w, im_d = im.shape
         hsv_img = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
         frame_thd = cv2.inRange(hsv_img, colour_min, colour_max)
@@ -97,8 +97,7 @@ class PoleDetector:
         boundings = [cv2.boundingRect(c) for c in contours]
         for bounding in boundings:
             x, y, w, h = bounding
-            if y > im_h / 2: continue
-            #print x,y,w,h,colour
+            if y > im_h / 2: continue                   # ignore lower half of image
             if self._in_bound(w) and self._in_bound(h):
                 return bounding
 
@@ -113,18 +112,8 @@ def main():
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        print "shutting downs"
+        print "shutting down"
 
     cv2.destroyAllWindows()
-
-def test():
-    pd = PoleDetector()
-    im = cv2.imread('/home/z3333567/catkin_ws/src/turtlebot-explore/assets/image.jpg')
-    #im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
-    pd.set_image(im)
-    pd.process_image()
-
-    cv2.destroyAllWindows()
-
 
 if __name__ == '__main__': main()

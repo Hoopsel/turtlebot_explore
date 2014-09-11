@@ -3,6 +3,7 @@ from math import sqrt
 from itertools import product
 
 class AStarGrid(astar.AStar):
+    """A grid search using an A* implementation"""
     def __init__(self, graph):
         astar.AStar.__init__(self, graph)
 
