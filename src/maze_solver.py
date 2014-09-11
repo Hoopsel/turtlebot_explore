@@ -74,16 +74,6 @@ class MazeSolver(object):
             rospy.logdebug("Beacon found, no current position")
             return
 
-        # figure out beacon position and target position for beacon 
-        # rotation = -self.heading 
-
-        # rotate point so it is as if robot is facing north
-        # x_dist = (data.x * np.cos(rotation) - data.y * np.sin(rotation)) / self._occ_grid.resolution
-        # y_dist = (data.x * np.sin(rotation) + data.y * np.cos(rotation)) / self._occ_grid.resolution
-
-        # x = self.map_position[0] + x_dist
-        # y = self.map_position[1] + y_dist
-
         x = self.map_position[0]
         y = self.map_position[1]
 
@@ -104,7 +94,7 @@ class MazeSolver(object):
     
     def start_explore(self):
         for i in range(3):
-            self.explore_pub.publish('explore') # some duplication here, not sure py version of headers are
+            self.explore_pub.publish('explore') 
             rospy.loginfo('publish explore')
             rospy.sleep(1.0)
 
