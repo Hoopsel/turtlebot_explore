@@ -13,7 +13,7 @@ if __name__ == '__main__':
     (trans, rot) = (0, 0)
     while not rospy.is_shutdown():
         try:
-            (trans, rot) = listener.lookupTransform('/slamGrid', '/base_link', rospy.Time(0))
+            (trans, rot) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print "no transform"
             continue

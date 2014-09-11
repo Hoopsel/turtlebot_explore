@@ -12,7 +12,7 @@ from geometry_msgs.msg import Twist
 from grid_search import grid_search
 
 
-
+    
 class MazeSolver(object):
 
     def __init__(self):
@@ -21,12 +21,12 @@ class MazeSolver(object):
         self.pub = rospy.Publisher('cmd_vel_mux/input/navi', Twist, queue_size=1)
         self.explore_pub = rospy.Publisher('turtle_cmd', String, queue_size=1)
         self._occ_grid = None
-        self.map_position = None
+        self.map_position = (0, 0)
         self.beacons = {} #store as beacon colours : position -> (pink,blue) : (27,32)
         self.goals = []
         self.heading = None
         self._angle_margin = np.deg2rad(10) 
-        self._speed = 2
+        self._speed = 0.5
         self._unpack_goals()
         self._finished = False
     
@@ -41,24 +41,32 @@ class MazeSolver(object):
     # listen for map updates
     def _update_grid(self, data):
         self._occ_grid = data
+        rospy.logdebug(self._occ_grid.info)
 
     def update_position(self, listener):
         rate = rospy.Rate(10.0)
-        while not self._finished:
+        while not rospy.is_shutdown():
             try:
-                (position, quaternion) = listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+                now = rospy.Time.now()
+                rospy.loginfo('waiting')
+                listener.waitForTransform('/map', '/base_footprint', now, rospy.Duration(3.0))
+                rospy.loginfo('finished waiting')
+                (position, quaternion) = listener.lookupTransform('/map', '/base_footprint', now)
+                rospy.loginfo('tf received')
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logerr("Transformation error")
                 continue
 
-            self.map_position = ((current_position[0] - self._occ_grid.origin[0]) / self._occ_grid.resolution,
-                                (current_position[1] - self._occ_grid.origin[1]) / self._occ_grid.resolution)
+            map_info = self._occ_grid.info
+            self.map_position = ((position.x - map_info.origin.position.x) / map_info.resolution,
+                                (position.y - map_info.origin.position.y) / map_info.resolution)
             
             rospy.logdebug("Map position %s and heading %s", str(position), str(quaternion))
             
             (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(quaternion)
             self.heading = yaw
             rate.sleep()
+
     # listen for beacon found
     def _beacon_found(self, data):
 
@@ -97,6 +105,7 @@ class MazeSolver(object):
     def start_explore(self):
         for i in range(3):
             self.explore_pub.publish('explore') # some duplication here, not sure py version of headers are
+            rospy.loginfo('publish explore')
             rospy.sleep(1.0)
 
     def stop_explore(self):

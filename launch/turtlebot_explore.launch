@@ -4,9 +4,15 @@
     <rosparam>
         beacons:
             beacon0:
-                top:    "green"
-                bottom: "pink"
+                top:    "pink"
+                bottom: "yellow"
             beacon1:
+                top:    "pink"
+                bottom: "green"
+            beacon2:
+                top:    "pink"
+                bottom: "blue"
+            beacon3:
                 top:    "blue"
                 bottom: "pink"
     </rosparam>
